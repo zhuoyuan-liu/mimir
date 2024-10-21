@@ -13,8 +13,6 @@ import (
 	math_bits "math/bits"
 	reflect "reflect"
 	strings "strings"
-
-	github_com_grafana_mimir_pkg_mimirpb "github.com/grafana/mimir/pkg/mimirpb"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -131,9 +129,6 @@ type SeriesResponse struct {
 	//	*SeriesResponse_StreamingChunks
 	//	*SeriesResponse_StreamingChunksEstimate
 	Result isSeriesResponse_Result `protobuf_oneof:"result"`
-
-	// Keep reference to buffer for unsafe references.
-	github_com_grafana_mimir_pkg_mimirpb.KeepBufferReference
 }
 
 func (m *SeriesResponse) Reset()      { *m = SeriesResponse{} }

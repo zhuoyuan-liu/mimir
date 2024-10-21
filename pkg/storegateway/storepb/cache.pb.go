@@ -31,9 +31,6 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type CachedSeries struct {
 	Series              []github_com_grafana_mimir_pkg_mimirpb.PreallocatingMetric `protobuf:"bytes,1,rep,name=series,proto3,customtype=github.com/grafana/mimir/pkg/mimirpb.PreallocatingMetric" json:"series"`
 	DiffEncodedPostings []byte                                                     `protobuf:"bytes,5,opt,name=diffEncodedPostings,proto3" json:"diffEncodedPostings,omitempty"`
-
-	// Keep reference to buffer for unsafe references.
-	github_com_grafana_mimir_pkg_mimirpb.KeepBufferReference
 }
 
 func (m *CachedSeries) Reset()      { *m = CachedSeries{} }

@@ -10,7 +10,6 @@ import (
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	github_com_prometheus_prometheus_model_histogram "github.com/prometheus/prometheus/model/histogram"
-	"google.golang.org/grpc/mem"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -244,12 +243,6 @@ type WriteRequest struct {
 	SkipLabelValidation bool `protobuf:"varint,1000,opt,name=skip_label_validation,json=skipLabelValidation,proto3" json:"skip_label_validation,omitempty"`
 	// Skip label count validation.
 	SkipLabelCountValidation bool `protobuf:"varint,1001,opt,name=skip_label_count_validation,json=skipLabelCountValidation,proto3" json:"skip_label_count_validation,omitempty"`
-
-	// Skip unmarshaling of exemplars.
-	skipUnmarshalingExemplars bool
-
-	// Keep reference to buffer for unsafe references.
-	KeepBufferReference
 }
 
 func (m *WriteRequest) Reset()      { *m = WriteRequest{} }
@@ -396,9 +389,6 @@ type TimeSeries struct {
 	Samples    []Sample    `protobuf:"bytes,2,rep,name=samples,proto3" json:"samples"`
 	Exemplars  []Exemplar  `protobuf:"bytes,3,rep,name=exemplars,proto3" json:"exemplars"`
 	Histograms []Histogram `protobuf:"bytes,4,rep,name=histograms,proto3" json:"histograms"`
-
-	// Skip unmarshaling of exemplars.
-	SkipUnmarshalingExemplars bool
 }
 
 func (m *TimeSeries) Reset()      { *m = TimeSeries{} }
@@ -6216,7 +6206,6 @@ func (m *WriteRequest) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Timeseries = append(m.Timeseries, PreallocTimeseries{})
-			m.Timeseries[len(m.Timeseries)-1].skipUnmarshalingExemplars = m.skipUnmarshalingExemplars
 			if err := m.Timeseries[len(m.Timeseries)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -6589,11 +6578,9 @@ func (m *TimeSeries) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if !m.SkipUnmarshalingExemplars {
-				m.Exemplars = append(m.Exemplars, Exemplar{})
-				if err := m.Exemplars[len(m.Exemplars)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
+			m.Exemplars = append(m.Exemplars, Exemplar{})
+			if err := m.Exemplars[len(m.Exemplars)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
 			iNdEx = postIndex
 		case 4:

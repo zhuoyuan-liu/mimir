@@ -90,9 +90,6 @@ type PrometheusResponse struct {
 	Headers   []*PrometheusHeader `protobuf:"bytes,5,rep,name=Headers,proto3" json:"-"`
 	Warnings  []string            `protobuf:"bytes,6,rep,name=Warnings,proto3" json:"warnings,omitempty"`
 	Infos     []string            `protobuf:"bytes,7,rep,name=Infos,proto3" json:"infos,omitempty"`
-
-	// Keep reference to buffer for unsafe references.
-	mimirpb.KeepBufferReference
 }
 
 func (m *PrometheusResponse) Reset()      { *m = PrometheusResponse{} }
