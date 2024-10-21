@@ -249,7 +249,7 @@ type WriteRequest struct {
 	skipUnmarshalingExemplars bool
 
 	// Keep reference to buffer for unsafe references.
-	buffer mem.Buffer
+	KeepBufferReference
 }
 
 func (m *WriteRequest) Reset()      { *m = WriteRequest{} }

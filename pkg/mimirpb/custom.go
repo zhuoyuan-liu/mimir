@@ -68,6 +68,23 @@ func (c *codecV2) Name() string {
 	return c.codec.Name()
 }
 
+type KeepBufferReference struct {
+	buf mem.Buffer
+}
+
+func (b *KeepBufferReference) SetBuffer(buffer mem.Buffer) {
+	b.buf = buffer
+}
+
+func (b *KeepBufferReference) FreeBuffer() {
+	if b.buf != nil {
+		b.buf.Free()
+		b.buf = nil
+	}
+}
+
+var _ BufferHolder = &KeepBufferReference{}
+
 // BufferHolder is an interface for protobuf messages that keep unsafe references to the unmarshalling buffer.
 // Implementations of this interface should keep a reference to said buffer.
 type BufferHolder interface {
@@ -76,17 +93,6 @@ type BufferHolder interface {
 }
 
 var _ BufferHolder = &WriteRequest{}
-
-func (m *WriteRequest) SetBuffer(buf mem.Buffer) {
-	m.buffer = buf
-}
-
-func (m *WriteRequest) FreeBuffer() {
-	if m.buffer != nil {
-		m.buffer.Free()
-		m.buffer = nil
-	}
-}
 
 // MinTimestamp returns the minimum timestamp (milliseconds) among all series
 // in the WriteRequest. Returns math.MaxInt64 if the request is empty.

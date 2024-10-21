@@ -3,20 +3,7 @@
 package querymiddleware
 
 import (
-	"google.golang.org/grpc/mem"
-
 	"github.com/grafana/mimir/pkg/mimirpb"
 )
 
 var _ mimirpb.BufferHolder = &PrometheusResponse{}
-
-func (m *PrometheusResponse) SetBuffer(buf mem.Buffer) {
-	m.buffer = buf
-}
-
-func (m *PrometheusResponse) FreeBuffer() {
-	if m.buffer != nil {
-		m.buffer.Free()
-		m.buffer = nil
-	}
-}

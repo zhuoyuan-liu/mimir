@@ -10,7 +10,6 @@ import (
 	proto "github.com/gogo/protobuf/proto"
 	_ "github.com/grafana/mimir/pkg/mimirpb"
 	github_com_grafana_mimir_pkg_mimirpb "github.com/grafana/mimir/pkg/mimirpb"
-	"google.golang.org/grpc/mem"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -34,7 +33,7 @@ type CachedSeries struct {
 	DiffEncodedPostings []byte                                                     `protobuf:"bytes,5,opt,name=diffEncodedPostings,proto3" json:"diffEncodedPostings,omitempty"`
 
 	// Keep reference to buffer for unsafe references.
-	buffer mem.Buffer
+	github_com_grafana_mimir_pkg_mimirpb.KeepBufferReference
 }
 
 func (m *CachedSeries) Reset()      { *m = CachedSeries{} }

@@ -8,12 +8,13 @@ import (
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	types "github.com/gogo/protobuf/types"
-	"google.golang.org/grpc/mem"
 	io "io"
 	math "math"
 	math_bits "math/bits"
 	reflect "reflect"
 	strings "strings"
+
+	github_com_grafana_mimir_pkg_mimirpb "github.com/grafana/mimir/pkg/mimirpb"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -132,7 +133,7 @@ type SeriesResponse struct {
 	Result isSeriesResponse_Result `protobuf_oneof:"result"`
 
 	// Keep reference to buffer for unsafe references.
-	buffer mem.Buffer
+	github_com_grafana_mimir_pkg_mimirpb.KeepBufferReference
 }
 
 func (m *SeriesResponse) Reset()      { *m = SeriesResponse{} }

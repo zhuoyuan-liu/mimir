@@ -9,7 +9,6 @@ import (
 	"github.com/gogo/protobuf/types"
 	"github.com/pkg/errors"
 	"github.com/prometheus/prometheus/model/labels"
-	"google.golang.org/grpc/mem"
 
 	"github.com/grafana/mimir/pkg/mimirpb"
 	"github.com/grafana/mimir/pkg/storage/chunk"
@@ -150,27 +149,4 @@ func (c AggrChunk) GetChunkEncoding() (chunk.Encoding, bool) {
 }
 
 var _ mimirpb.BufferHolder = &SeriesResponse{}
-
-func (m *SeriesResponse) SetBuffer(buf mem.Buffer) {
-	m.buffer = buf
-}
-
-func (m *SeriesResponse) FreeBuffer() {
-	if m.buffer != nil {
-		m.buffer.Free()
-		m.buffer = nil
-	}
-}
-
 var _ mimirpb.BufferHolder = &CachedSeries{}
-
-func (m *CachedSeries) SetBuffer(buf mem.Buffer) {
-	m.buffer = buf
-}
-
-func (m *CachedSeries) FreeBuffer() {
-	if m.buffer != nil {
-		m.buffer.Free()
-		m.buffer = nil
-	}
-}

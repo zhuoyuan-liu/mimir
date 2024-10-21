@@ -16,7 +16,6 @@ import (
 	mimirpb "github.com/grafana/mimir/pkg/mimirpb"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
-	"google.golang.org/grpc/mem"
 	status "google.golang.org/grpc/status"
 	io "io"
 	math "math"
@@ -586,7 +585,7 @@ type QueryResponse struct {
 	Timeseries []mimirpb.TimeSeries `protobuf:"bytes,1,rep,name=timeseries,proto3" json:"timeseries"`
 
 	// Keep reference to buffer for unsafe references.
-	buffer mem.Buffer
+	mimirpb.KeepBufferReference
 }
 
 func (m *QueryResponse) Reset()      { *m = QueryResponse{} }
@@ -644,7 +643,7 @@ type QueryStreamResponse struct {
 	StreamingSeriesChunks []QueryStreamSeriesChunks `protobuf:"bytes,5,rep,name=streaming_series_chunks,json=streamingSeriesChunks,proto3" json:"streaming_series_chunks"`
 
 	// Keep reference to buffer for unsafe references.
-	buffer mem.Buffer
+	mimirpb.KeepBufferReference
 }
 
 func (m *QueryStreamResponse) Reset()      { *m = QueryStreamResponse{} }
@@ -813,7 +812,7 @@ type ExemplarQueryResponse struct {
 	Timeseries []mimirpb.TimeSeries `protobuf:"bytes,1,rep,name=timeseries,proto3" json:"timeseries"`
 
 	// Keep reference to buffer for unsafe references.
-	buffer mem.Buffer
+	mimirpb.KeepBufferReference
 }
 
 func (m *ExemplarQueryResponse) Reset()      { *m = ExemplarQueryResponse{} }
@@ -1334,7 +1333,7 @@ type MetricsForLabelMatchersResponse struct {
 	Metric []*mimirpb.Metric `protobuf:"bytes,1,rep,name=metric,proto3" json:"metric,omitempty"`
 
 	// Keep reference to buffer for unsafe references.
-	buffer mem.Buffer
+	mimirpb.KeepBufferReference
 }
 
 func (m *MetricsForLabelMatchersResponse) Reset()      { *m = MetricsForLabelMatchersResponse{} }
@@ -1485,7 +1484,7 @@ type ActiveSeriesResponse struct {
 	BucketCount []uint64 `protobuf:"varint,2,rep,packed,name=bucket_count,json=bucketCount,proto3" json:"bucket_count,omitempty"`
 
 	// Keep reference to buffer for unsafe references.
-	buffer mem.Buffer
+	mimirpb.KeepBufferReference
 }
 
 func (m *ActiveSeriesResponse) Reset()      { *m = ActiveSeriesResponse{} }
