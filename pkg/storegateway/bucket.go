@@ -944,8 +944,10 @@ func (s *BucketStore) sendSeriesChunks(
 		// because the subsequent call to seriesSet.Next() may release it. But it is safe to hold
 		// onto lset because the labels are not released.
 		lset, chks := seriesSet.At()
-		series := storepb.Series{
-			Labels: mimirpb.FromLabelsToLabelAdapters(lset),
+		series := storepb.CustomSeries{
+			Series: &storepb.Series{
+				Labels: mimirpb.FromLabelsToLabelAdapters(lset),
+			},
 		}
 		if !req.SkipChunks {
 			series.Chunks = chks
@@ -953,7 +955,7 @@ func (s *BucketStore) sendSeriesChunks(
 			s.metrics.chunkSizeBytes.Observe(float64(chunksSize(chks)))
 		}
 
-		err := s.sendMessage("series", srv, storepb.NewSeriesResponse(&series), &encodeDuration, &sendDuration)
+		err := s.sendMessage("series", srv, storepb.NewSeriesResponse(series), &encodeDuration, &sendDuration)
 		if err != nil {
 			return err
 		}

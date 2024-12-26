@@ -48,7 +48,7 @@ func convertMatchersToLabelMatcher(matchers []*labels.Matcher) []storepb.LabelMa
 
 // Implementation of storage.SeriesSet, based on individual responses from store client.
 type blockQuerierSeriesSet struct {
-	series []*storepb.Series
+	series []*storepb.CustomSeries
 
 	// next response to process
 	next int

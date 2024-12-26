@@ -6,17 +6,21 @@
 package storepb
 
 import (
+	fmt "fmt"
+	io "io"
+
 	"github.com/gogo/protobuf/types"
 	"github.com/pkg/errors"
 	"github.com/prometheus/prometheus/model/labels"
 
+	"github.com/grafana/mimir/pkg/mimirpb"
 	"github.com/grafana/mimir/pkg/storage/chunk"
 )
 
-func NewSeriesResponse(series *Series) *SeriesResponse {
+func NewSeriesResponse(series CustomSeries) *SeriesResponse {
 	return &SeriesResponse{
 		Result: &SeriesResponse_Series{
-			Series: series,
+			Series: &series,
 		},
 	}
 }
@@ -145,4 +149,378 @@ func (c AggrChunk) GetChunkEncoding() (chunk.Encoding, bool) {
 	default:
 		return 0, false
 	}
+}
+
+type CustomSeries struct {
+	*Series
+}
+
+func (*CustomSeries) isSeriesResponse_Result() {}
+
+func (m *CustomSeries) Unmarshal(data []byte) error {
+	// TODO: Get m.Series from pool.
+	m.Series = &Series{}
+	l := len(data)
+	index := 0
+	for index < l {
+		preIndex := index
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTypes
+			}
+			if index >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[index]
+			index++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Series: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Series: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Labels", wireType)
+			}
+
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+
+				b := data[index]
+				index++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTypes
+			}
+
+			postIndex := index + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+
+			var la mimirpb.LabelAdapter
+			if err := unmarshalLabelAdapter(&la, data[index:postIndex]); err != nil {
+				return err
+			}
+			m.Labels = append(m.Labels, la)
+			index = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Chunks", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := index + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var chk AggrChunk
+			if err := unmarshalAggrChunk(&chk, data[index:postIndex]); err != nil {
+				return err
+			}
+			m.Chunks = append(m.Chunks, chk)
+			index = postIndex
+		default:
+			index = preIndex
+			skippy, err := skipTypes(data[index:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if (index + skippy) < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if (index + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			index += skippy
+		}
+	}
+
+	if index > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *SeriesResponse) GetSeries() *CustomSeries {
+	if x, ok := m.GetResult().(*SeriesResponse_Series); ok {
+		return x.Series
+	}
+	return nil
+}
+
+func unmarshalLabelAdapter(la *mimirpb.LabelAdapter, data []byte) error {
+	l := len(data)
+	index := 0
+	for index < l {
+		preIndex := index
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return mimirpb.ErrIntOverflowMimir
+			}
+			if index >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[index]
+			index++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: LabelPair: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: LabelPair: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return mimirpb.ErrIntOverflowMimir
+				}
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return mimirpb.ErrInvalidLengthMimir
+			}
+			postIndex := index + byteLen
+			if postIndex < 0 {
+				return mimirpb.ErrInvalidLengthMimir
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			// TODO: Get byte slice from pool, copy the data to it, and take a yoloString.
+			la.Name = string(data[index:postIndex])
+			index = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return mimirpb.ErrIntOverflowMimir
+				}
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return mimirpb.ErrInvalidLengthMimir
+			}
+			postIndex := index + byteLen
+			if postIndex < 0 {
+				return mimirpb.ErrInvalidLengthMimir
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			// TODO: Get byte slice from pool, copy the data to it, and take a yoloString.
+			la.Value = string(data[index:postIndex])
+			index = postIndex
+		default:
+			index = preIndex
+			skippy, err := skipMimir(data[index:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return mimirpb.ErrInvalidLengthMimir
+			}
+			if (index + skippy) < 0 {
+				return mimirpb.ErrInvalidLengthMimir
+			}
+			if (index + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			index += skippy
+		}
+	}
+	if index > l {
+		return io.ErrUnexpectedEOF
+	}
+
+	return nil
+}
+
+func skipMimir(data []byte) (n int, err error) {
+	l := len(data)
+	index := 0
+	for index < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return 0, mimirpb.ErrIntOverflowMimir
+			}
+			if index >= l {
+				return 0, io.ErrUnexpectedEOF
+			}
+			b := data[index]
+			index++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		wireType := int(wire & 0x7)
+		switch wireType {
+		case 0:
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, mimirpb.ErrIntOverflowMimir
+				}
+				if index >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				index++
+				if data[index-1] < 0x80 {
+					break
+				}
+			}
+			return index, nil
+		case 1:
+			index += 8
+			return index, nil
+		case 2:
+			var length int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, mimirpb.ErrIntOverflowMimir
+				}
+				if index >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				length |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if length < 0 {
+				return 0, mimirpb.ErrInvalidLengthMimir
+			}
+			index += length
+			if index < 0 {
+				return 0, mimirpb.ErrInvalidLengthMimir
+			}
+			return index, nil
+		case 3:
+			for {
+				var innerWire uint64
+				var start int = index
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return 0, mimirpb.ErrIntOverflowMimir
+					}
+					if index >= l {
+						return 0, io.ErrUnexpectedEOF
+					}
+					b := data[index]
+					index++
+					innerWire |= (uint64(b) & 0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				innerWireType := int(innerWire & 0x7)
+				if innerWireType == 4 {
+					break
+				}
+				next, err := skipMimir(data[start:])
+				if err != nil {
+					return 0, err
+				}
+				index = start + next
+				if index < 0 {
+					return 0, mimirpb.ErrInvalidLengthMimir
+				}
+			}
+			return index, nil
+		case 4:
+			return index, nil
+		case 5:
+			index += 4
+			return index, nil
+		default:
+			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
+		}
+	}
+	panic("unreachable")
+}
+
+func unmarshalAggrChunk(chk *AggrChunk, data []byte) error {
+	// TODO: Customize, to use pooling.
+	return chk.Unmarshal(data)
 }

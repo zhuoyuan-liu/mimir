@@ -244,7 +244,6 @@ func (s *storeGatewayStreamReader) readStream(log *spanlogger.SpanLogger) error 
 	}
 
 	estimate := msg.GetStreamingChunksEstimate()
-	msg.FreeBuffer()
 	if estimate == nil {
 		return fmt.Errorf("expected to receive chunks estimate, but got message of type %T", msg.Result)
 	}
@@ -262,18 +261,15 @@ func (s *storeGatewayStreamReader) readStream(log *spanlogger.SpanLogger) error 
 
 		batch := msg.GetStreamingChunks()
 		if batch == nil {
-			msg.FreeBuffer()
 			return fmt.Errorf("expected to receive streaming chunks, but got message of type %T", msg.Result)
 		}
 
 		if len(batch.Series) == 0 {
-			msg.FreeBuffer()
 			continue
 		}
 
 		totalSeries += len(batch.Series)
 		if totalSeries > s.expectedSeriesCount {
-			msg.FreeBuffer()
 			return fmt.Errorf("expected to receive only %v series, but received at least %v series", s.expectedSeriesCount, totalSeries)
 		}
 
@@ -287,11 +283,9 @@ func (s *storeGatewayStreamReader) readStream(log *spanlogger.SpanLogger) error 
 		}
 		totalChunks += numChunks
 		if err := s.queryLimiter.AddChunks(numChunks); err != nil {
-			msg.FreeBuffer()
 			return err
 		}
 		if err := s.queryLimiter.AddChunkBytes(chunkBytes); err != nil {
-			msg.FreeBuffer()
 			return err
 		}
 
@@ -309,7 +303,6 @@ func (s *storeGatewayStreamReader) readStream(log *spanlogger.SpanLogger) error 
 			safeSeries = append(safeSeries, &safe)
 		}
 		batch.Series = safeSeries
-		msg.FreeBuffer()
 
 		if err := s.sendBatch(batch); err != nil {
 			return err
