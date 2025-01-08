@@ -210,7 +210,7 @@ func TestReaders_CreationWithEmptyContents(t *testing.T) {
 	t.Run("fileReader", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := path.Join(dir, "test-file")
-		require.NoError(t, os.WriteFile(filePath, nil, 0700))
+		require.NoError(t, os.WriteFile(filePath, nil, 0600))
 
 		f, err := os.Open(filePath)
 		require.NoError(t, err)
