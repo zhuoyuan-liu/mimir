@@ -490,7 +490,7 @@ func TestDistributorRemoteWrite2(t *testing.T) {
 				}
 
 				res, err := client.PushRW2(ser)
-				require.Error(t, err)
+				require.NoError(t, err)
 				require.True(t, res.StatusCode == http.StatusOK || res.StatusCode == http.StatusAccepted, res.Status)
 			}
 
