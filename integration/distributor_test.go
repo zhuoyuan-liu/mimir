@@ -425,7 +425,7 @@ func TestDistributorRemoteWrite2(t *testing.T) {
 		"-distributor.ha-tracker.store":                      "consul",
 		"-distributor.ha-tracker.consul.hostname":            consul.NetworkHTTPEndpoint(),
 		"-distributor.ha-tracker.prefix":                     "prom_ha/",
-		"-timeseries-unmarshal-caching-optimization-enabled": strconv.FormatBool(false), //cachingUnmarshalDataEnabled),
+		"-timeseries-unmarshal-caching-optimization-enabled": strconv.FormatBool(false), // TODO(krajorama): add cachingUnmarshalDataEnabled testcase.
 	}
 
 	flags := mergeFlags(
