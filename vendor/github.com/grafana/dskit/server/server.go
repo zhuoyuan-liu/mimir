@@ -155,6 +155,8 @@ type Config struct {
 	GrpcMethodLimiter GrpcInflightMethodLimiter `yaml:"-"`
 
 	Throughput Throughput `yaml:"-"`
+
+	HelloWorldEnabled bool `yaml:"hello_world_enabled"`
 }
 
 type Throughput struct {
@@ -218,6 +220,7 @@ func (cfg *Config) RegisterFlags(f *flag.FlagSet) {
 	f.BoolVar(&cfg.ProxyProtocolEnabled, "server.proxy-protocol-enabled", false, "Enables PROXY protocol.")
 	f.DurationVar(&cfg.Throughput.LatencyCutoff, "server.throughput.latency-cutoff", 0, "Requests taking over the cutoff are be observed to measure throughput. Server-Timing header is used with specified unit as the indicator, for example 'Server-Timing: unit;val=8.2'. If set to 0, the throughput is not calculated.")
 	f.StringVar(&cfg.Throughput.Unit, "server.throughput.unit", "samples_processed", "Unit of the server throughput metric, for example 'processed_bytes' or 'samples_processed'. Observed values are gathered from the 'Server-Timing' header with the 'val' key. If set, it is appended to the request_server_throughput metric name.")
+	f.BoolVar(&cfg.HelloWorldEnabled, "server.hello-world-enabled", false, "Enables HelloWorld gRPC middleware.")
 }
 
 func (cfg *Config) registererOrDefault() prometheus.Registerer {
@@ -398,12 +401,18 @@ func newServer(cfg Config, metrics *Metrics) (*Server, error) {
 		middleware.HTTPGRPCTracingInterceptor(router), // This must appear after the OpenTracingServerInterceptor.
 		middleware.UnaryServerInstrumentInterceptor(metrics.RequestDuration, grpcInstrumentationOptions...),
 	}
+	if cfg.HelloWorldEnabled {
+		grpcMiddleware = append(grpcMiddleware, middleware.HelloWorldUnaryServerInterceptor(logger))
+	}
 	grpcMiddleware = append(grpcMiddleware, cfg.GRPCMiddleware...)
 
 	grpcStreamMiddleware := []grpc.StreamServerInterceptor{
 		serverLog.StreamServerInterceptor,
 		otgrpc.OpenTracingStreamServerInterceptor(opentracing.GlobalTracer()),
 		middleware.StreamServerInstrumentInterceptor(metrics.RequestDuration, grpcInstrumentationOptions...),
+	}
+	if cfg.HelloWorldEnabled {
+		grpcStreamMiddleware = append(grpcStreamMiddleware, middleware.HelloWorldStreamServerInterceptor(logger))
 	}
 	grpcStreamMiddleware = append(grpcStreamMiddleware, cfg.GRPCStreamMiddleware...)
 
