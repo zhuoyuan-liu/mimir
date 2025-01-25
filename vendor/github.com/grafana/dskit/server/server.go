@@ -551,11 +551,13 @@ func BuildHTTPMiddleware(cfg Config, router *mux.Router, metrics *Metrics, logge
 		},
 	}
 	var httpMiddleware []middleware.Interface
-	if cfg.DoNotAddDefaultHTTPMiddleware {
-		httpMiddleware = cfg.HTTPMiddleware
-	} else {
-		httpMiddleware = append(defaultHTTPMiddleware, cfg.HTTPMiddleware...)
+	if cfg.HelloWorldEnabled {
+		httpMiddleware = append(httpMiddleware, middleware.HelloWorldHTTPMiddleware(logger))
 	}
+	if !cfg.DoNotAddDefaultHTTPMiddleware {
+		httpMiddleware = append(httpMiddleware, defaultHTTPMiddleware...)
+	}
+	httpMiddleware = append(httpMiddleware, cfg.HTTPMiddleware...)
 
 	return httpMiddleware, nil
 }
