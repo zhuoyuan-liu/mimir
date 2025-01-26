@@ -411,9 +411,6 @@ func newServer(cfg Config, metrics *Metrics) (*Server, error) {
 		otgrpc.OpenTracingStreamServerInterceptor(opentracing.GlobalTracer()),
 		middleware.StreamServerInstrumentInterceptor(metrics.RequestDuration, grpcInstrumentationOptions...),
 	}
-	if cfg.HelloWorldEnabled {
-		grpcStreamMiddleware = append(grpcStreamMiddleware, middleware.HelloWorldStreamServerInterceptor(logger))
-	}
 	grpcStreamMiddleware = append(grpcStreamMiddleware, cfg.GRPCStreamMiddleware...)
 
 	grpcKeepAliveOptions := keepalive.ServerParameters{
