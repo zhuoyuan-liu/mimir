@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/dskit/httpgrpc"
 	"go.uber.org/atomic"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 var (
@@ -39,7 +40,7 @@ func HelloWorldHTTPMiddleware(logger log.Logger) Interface {
 func HelloWorldUnaryServerInterceptor(logger log.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if unaryCount.Inc()%1000 == 0 {
-			level.Info(logger).Log("server", info.Server, "method", info.FullMethod, "msg", "Hello, World!!!", "req", requestToString(req))
+			level.Info(logger).Log("server", info.Server, "method", info.FullMethod, "msg", "Hello, World!!!", "req", requestToString(req), "context", contextToString(ctx))
 		}
 		return handler(ctx, req)
 	}
@@ -61,6 +62,14 @@ func HelloWorldStreamServerInterceptor(logger log.Logger) grpc.StreamServerInter
 	}
 }
 
+func contextToString(ctx context.Context) string {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "no metadata found in incoming context"
+	}
+	return fmt.Sprintf("%v", md)
+}
+
 func requestToString(req interface{}) string {
 	httpGrpcReq, ok := req.(*httpgrpc.HTTPRequest)
 	if ok {
@@ -77,7 +86,27 @@ func requestToString(req interface{}) string {
 			`}`,
 		}, "")
 	}
-	httpReq, ok := req.(*http.Request)
+	httpReqPointer, ok := req.(*http.Request)
+	if ok {
+		repeatedStringForHeaders := "[]*Header{"
+		for key, values := range httpReqPointer.Header {
+			s := strings.Join([]string{`&Header{`,
+				`Key:` + fmt.Sprintf("%v", key) + `,`,
+				`Values:` + fmt.Sprintf("%v", values) + `,`,
+				`}`,
+			}, "")
+			repeatedStringForHeaders += s + ","
+		}
+		repeatedStringForHeaders += "}"
+		s := strings.Join([]string{`&http.Request{`,
+			`Method:` + fmt.Sprintf("%v", httpReqPointer.Method) + `,`,
+			`Url:` + fmt.Sprintf("%v", httpReqPointer.URL) + `,`,
+			`Headers:` + repeatedStringForHeaders + `,`,
+			`}`,
+		}, "")
+		return s
+	}
+	httpReq, ok := req.(http.Request)
 	if ok {
 		repeatedStringForHeaders := "[]*Header{"
 		for key, values := range httpReq.Header {
@@ -89,7 +118,7 @@ func requestToString(req interface{}) string {
 			repeatedStringForHeaders += s + ","
 		}
 		repeatedStringForHeaders += "}"
-		s := strings.Join([]string{`&http.Request{`,
+		s := strings.Join([]string{`http.Request{`,
 			`Method:` + fmt.Sprintf("%v", httpReq.Method) + `,`,
 			`Url:` + fmt.Sprintf("%v", httpReq.URL) + `,`,
 			`Headers:` + repeatedStringForHeaders + `,`,
@@ -97,25 +126,5 @@ func requestToString(req interface{}) string {
 		}, "")
 		return s
 	}
-	httpReq1, ok := req.(http.Request)
-	if ok {
-		repeatedStringForHeaders := "[]*Header{"
-		for key, values := range httpReq1.Header {
-			s := strings.Join([]string{`&Header{`,
-				`Key:` + fmt.Sprintf("%v", key) + `,`,
-				`Values:` + fmt.Sprintf("%v", values) + `,`,
-				`}`,
-			}, "")
-			repeatedStringForHeaders += s + ","
-		}
-		repeatedStringForHeaders += "}"
-		s := strings.Join([]string{`http.Request{`,
-			`Method:` + fmt.Sprintf("%v", httpReq1.Method) + `,`,
-			`Url:` + fmt.Sprintf("%v", httpReq1.URL) + `,`,
-			`Headers:` + repeatedStringForHeaders + `,`,
-			`}`,
-		}, "")
-		return s
-	}
-	return fmt.Sprintf("%t", req)
+	return fmt.Sprintf("%T", req)
 }
