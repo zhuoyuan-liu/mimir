@@ -21,33 +21,6 @@ var (
 	streamCount = atomic.NewInt64(0)
 )
 
-type helloWorldHTTPMiddleware struct {
-	logger log.Logger
-}
-
-func (m helloWorldHTTPMiddleware) Wrap(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if httpCount.Inc()%1000 == 0 {
-			level.Info(m.logger).Log("url", r.URL.String(), "method", r.Method, "msg", "Hello, World!!!", "req", requestToString(r))
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func HelloWorldHTTPMiddleware(logger log.Logger) Interface {
-	return helloWorldHTTPMiddleware{logger: logger}
-}
-
-func HelloWorldUnaryClientInterceptor(cluster string) grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		if cluster != "" {
-			ctx = grpcutil.AppendClusterToOutgoungContext(ctx, cluster)
-		}
-
-		return invoker(ctx, method, req, reply, cc, opts...)
-	}
-}
-
 func HelloWorldUnaryServerInterceptor(logger log.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if unaryCount.Inc()%1000 == 0 {
@@ -55,7 +28,7 @@ func HelloWorldUnaryServerInterceptor(logger log.Logger) grpc.UnaryServerInterce
 			if !ok {
 				clusterID = "<unknown>"
 			}
-			level.Info(logger).Log("server", info.Server, "method", info.FullMethod, "msg", "Hello, World!!!", "req", requestToString(req), "context", contextToString(ctx), "cluster", clusterID)
+			level.Info(logger).Log("server", info.Server, "method", info.FullMethod, "msg", "Hello, World!!!", "req", requestToString(req), "context", contextToString(ctx), "clusterID", clusterID)
 		}
 		return handler(ctx, req)
 	}
