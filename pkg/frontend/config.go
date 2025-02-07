@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-kit/log"
 	"github.com/grafana/dskit/netutil"
+	"github.com/grafana/dskit/server"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -59,7 +60,7 @@ func (cfg *CombinedFrontendConfig) Validate() error {
 // Returned RoundTripper can be wrapped in more round-tripper middlewares, and then eventually registered
 // into HTTP server using the Handler from this package. Returned RoundTripper is always non-nil
 // (if there are no errors), and it uses the returned frontend (if any).
-func InitFrontend(cfg CombinedFrontendConfig, v1Limits v1.Limits, v2Limits v2.Limits, grpcListenPort int, log log.Logger, reg prometheus.Registerer, codec querymiddleware.Codec, cluster string) (http.RoundTripper, *v1.Frontend, *v2.Frontend, error) {
+func InitFrontend(cfg CombinedFrontendConfig, v1Limits v1.Limits, v2Limits v2.Limits, grpcListenPort int, log log.Logger, reg prometheus.Registerer, codec querymiddleware.Codec, cluster string, serverMetrics *server.Metrics) (http.RoundTripper, *v1.Frontend, *v2.Frontend, error) {
 	switch {
 	case cfg.DownstreamURL != "":
 		// If the user has specified a downstream Prometheus, then we should use that.
@@ -82,7 +83,7 @@ func InitFrontend(cfg CombinedFrontendConfig, v1Limits v1.Limits, v2Limits v2.Li
 		}
 
 		fr, err := v2.NewFrontend(cfg.FrontendV2, v2Limits, log, reg, codec, cluster)
-		return transport.AdaptGrpcRoundTripperToHTTPRoundTripper(fr, cfg.Cluster), nil, fr, err
+		return transport.AdaptGrpcRoundTripperToHTTPRoundTripper(fr, cfg.Cluster, serverMetrics), nil, fr, err
 
 	default:
 		// No scheduler = use original frontend.
@@ -90,6 +91,6 @@ func InitFrontend(cfg CombinedFrontendConfig, v1Limits v1.Limits, v2Limits v2.Li
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		return transport.AdaptGrpcRoundTripperToHTTPRoundTripper(fr, cfg.Cluster), fr, nil, nil
+		return transport.AdaptGrpcRoundTripperToHTTPRoundTripper(fr, cfg.Cluster, serverMetrics), fr, nil, nil
 	}
 }
