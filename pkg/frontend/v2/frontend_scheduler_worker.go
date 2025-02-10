@@ -63,7 +63,15 @@ type frontendSchedulerWorkers struct {
 	enqueueDuration *prometheus.HistogramVec
 }
 
-func newFrontendSchedulerWorkers(cfg Config, frontendAddress string, requestsCh <-chan *frontendRequest, toSchedulerAdapter frontendToSchedulerAdapter, log log.Logger, reg prometheus.Registerer, cluster string) (*frontendSchedulerWorkers, error) {
+func newFrontendSchedulerWorkers(
+	cfg Config,
+	frontendAddress string,
+	requestsCh <-chan *frontendRequest,
+	toSchedulerAdapter frontendToSchedulerAdapter,
+	log log.Logger,
+	reg prometheus.Registerer,
+	cluster string,
+) (*frontendSchedulerWorkers, error) {
 	f := &frontendSchedulerWorkers{
 		cfg:                       cfg,
 		log:                       log,
