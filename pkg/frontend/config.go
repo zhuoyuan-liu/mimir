@@ -32,7 +32,7 @@ type CombinedFrontendConfig struct {
 
 	DownstreamURL string `yaml:"downstream_url" category:"advanced"`
 
-	Cluster string `yaml:"-"`
+	ClusterVerificationLabel string `yaml:"-"`
 }
 
 func (cfg *CombinedFrontendConfig) RegisterFlags(f *flag.FlagSet, logger log.Logger) {
@@ -83,7 +83,7 @@ func InitFrontend(cfg CombinedFrontendConfig, v1Limits v1.Limits, v2Limits v2.Li
 		}
 
 		fr, err := v2.NewFrontend(cfg.FrontendV2, v2Limits, log, reg, codec, cluster)
-		return transport.AdaptGrpcRoundTripperToHTTPRoundTripper(fr, cfg.Cluster, serverMetrics), nil, fr, err
+		return transport.AdaptGrpcRoundTripperToHTTPRoundTripper(fr, cfg.ClusterVerificationLabel, serverMetrics), nil, fr, err
 
 	default:
 		// No scheduler = use original frontend.
@@ -91,6 +91,6 @@ func InitFrontend(cfg CombinedFrontendConfig, v1Limits v1.Limits, v2Limits v2.Li
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		return transport.AdaptGrpcRoundTripperToHTTPRoundTripper(fr, cfg.Cluster, serverMetrics), fr, nil, nil
+		return transport.AdaptGrpcRoundTripperToHTTPRoundTripper(fr, cfg.ClusterVerificationLabel, serverMetrics), fr, nil, nil
 	}
 }
