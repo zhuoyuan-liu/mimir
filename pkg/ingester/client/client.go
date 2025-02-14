@@ -8,6 +8,7 @@ package client
 import (
 	"flag"
 
+	"github.com/go-kit/log"
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/ring"
@@ -33,10 +34,10 @@ type closableHealthAndIngesterClient struct {
 }
 
 // MakeIngesterClient makes a new IngesterClient
-func MakeIngesterClient(inst ring.InstanceDesc, cfg Config, metrics *Metrics) (HealthAndIngesterClient, error) {
+func MakeIngesterClient(inst ring.InstanceDesc, cfg Config, metrics *Metrics, logger log.Logger) (HealthAndIngesterClient, error) {
 	reportGRPCStatusesOptions := []middleware.InstrumentationOption{middleware.ReportGRPCStatusOption}
 	unary, stream := grpcclient.Instrument(metrics.requestDuration, reportGRPCStatusesOptions...)
-	unary = append(unary, querierapi.ReadConsistencyClientUnaryInterceptor, middleware.ClusterUnaryClientInterceptor(cfg.ClusterVerificationLabel))
+	unary = append(unary, querierapi.ReadConsistencyClientUnaryInterceptor, middleware.ClusterUnaryClientInterceptor(cfg.ClusterVerificationLabel, metrics.invalidClusterVerificationLabels, logger))
 	stream = append(stream, querierapi.ReadConsistencyClientStreamInterceptor)
 
 	dialOpts, err := cfg.GRPCClientConfig.DialOption(unary, stream)

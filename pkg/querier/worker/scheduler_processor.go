@@ -71,6 +71,12 @@ func newSchedulerProcessor(cfg Config, handler RequestHandler, log log.Logger, r
 			Help:    "Time spend doing requests to frontend.",
 			Buckets: prometheus.ExponentialBuckets(0.001, 4, 6),
 		}, []string{"operation", "status_code"}),
+
+		invalidClusterValidation: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name:        "cortex_querier_query_frontend_client_request_invalid_cluster_verification_labels_total",
+			Help:        "Number of requests with invalid cluster verification label.",
+			ConstLabels: nil,
+		}, []string{"protocol", "method", "request_cluster_label", "failing_component"}),
 	}
 
 	frontendClientsGauge := promauto.With(reg).NewGauge(prometheus.GaugeOpts{
@@ -110,6 +116,7 @@ type schedulerProcessor struct {
 
 	frontendPool                  *client.Pool
 	frontendClientRequestDuration *prometheus.HistogramVec
+	invalidClusterValidation      *prometheus.CounterVec
 
 	schedulerClientFactory func(conn *grpc.ClientConn) schedulerpb.SchedulerForQuerierClient
 }
@@ -438,7 +445,7 @@ func (w httpGrpcHeaderWriter) Set(key, val string) {
 
 func (sp *schedulerProcessor) createFrontendClient(addr string) (client.PoolClient, error) {
 	unary, stream := grpcclient.Instrument(sp.frontendClientRequestDuration)
-	unary = append(unary, middleware.ClusterUnaryClientInterceptor(sp.cluster))
+	unary = append(unary, middleware.ClusterUnaryClientInterceptor(sp.cluster, sp.invalidClusterValidation, sp.log))
 	opts, err := sp.grpcConfig.DialOption(unary, stream)
 	if err != nil {
 		return nil, err
