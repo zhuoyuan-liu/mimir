@@ -17,11 +17,11 @@ const (
 
 func NewRequestInvalidClusterVerficationLabelsTotalCounter(reg prometheus.Registerer, client string, protocol string) *prometheus.CounterVec {
 	return promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-		Name: "cortex_request_invalid_cluster_verification_labels_total",
+		Name: "cortex_client_request_invalid_cluster_verification_labels_total",
 		Help: "Number of requests with invalid cluster verification label.",
 		ConstLabels: map[string]string{
 			clientLabel:   client,
 			protocolLabel: protocol,
 		},
-	}, []string{methodLabel, requestClusterLabel, failingSideLabel})
+	}, []string{"old_protocol", methodLabel, requestClusterLabel, failingSideLabel})
 }
