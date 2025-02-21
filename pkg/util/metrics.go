@@ -23,5 +23,5 @@ func NewRequestInvalidClusterVerficationLabelsTotalCounter(reg prometheus.Regist
 			clientLabel:   client,
 			protocolLabel: protocol,
 		},
-	}, []string{"old_protocol", methodLabel, requestClusterLabel, failingSideLabel})
+	}, []string{methodLabel, requestClusterLabel, failingSideLabel})
 }

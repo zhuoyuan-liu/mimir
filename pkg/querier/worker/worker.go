@@ -24,6 +24,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 
+	"github.com/grafana/mimir/pkg/util"
+
 	"github.com/grafana/mimir/pkg/scheduler/schedulerdiscovery"
 	"github.com/grafana/mimir/pkg/util/grpcencoding/s2"
 )
@@ -133,10 +135,13 @@ func NewQuerierWorker(cfg Config, handler RequestHandler, log log.Logger, reg pr
 		cfg.QuerierID = hostname
 	}
 
-	var processor processor
-	var grpcCfg grpcclient.Config
-	var servs []services.Service
-	var factory serviceDiscoveryFactory
+	var (
+		processor    processor
+		grpcCfg      grpcclient.Config
+		workerClient = "worker"
+		servs        []services.Service
+		factory      serviceDiscoveryFactory
+	)
 
 	switch {
 	case cfg.SchedulerAddress != "" || cfg.QuerySchedulerDiscovery.Mode == schedulerdiscovery.ModeRing:
@@ -147,6 +152,7 @@ func NewQuerierWorker(cfg Config, handler RequestHandler, log log.Logger, reg pr
 		}
 
 		grpcCfg = cfg.QuerySchedulerGRPCClientConfig
+		workerClient = "query-scheduler-worker"
 		processor, servs = newSchedulerProcessor(cfg, handler, log, reg)
 
 	case cfg.FrontendAddress != "":
@@ -157,16 +163,17 @@ func NewQuerierWorker(cfg Config, handler RequestHandler, log log.Logger, reg pr
 		}
 
 		grpcCfg = cfg.QueryFrontendGRPCClientConfig
+		workerClient = "query-frontend-worker"
 		processor = newFrontendProcessor(cfg, handler, log)
 
 	default:
 		return nil, errors.New("no query-scheduler or query-frontend address")
 	}
 
-	return newQuerierWorkerWithProcessor(grpcCfg, cfg, log, processor, factory, servs, reg)
+	return newQuerierWorkerWithProcessor(grpcCfg, cfg, log, processor, factory, servs, reg, workerClient)
 }
 
-func newQuerierWorkerWithProcessor(grpcCfg grpcclient.Config, cfg Config, log log.Logger, processor processor, newServiceDiscovery serviceDiscoveryFactory, servs []services.Service, reg prometheus.Registerer) (*querierWorker, error) {
+func newQuerierWorkerWithProcessor(grpcCfg grpcclient.Config, cfg Config, log log.Logger, processor processor, newServiceDiscovery serviceDiscoveryFactory, servs []services.Service, reg prometheus.Registerer, workerClient string) (*querierWorker, error) {
 	f := &querierWorker{
 		grpcClientConfig:         grpcCfg,
 		maxConcurrentRequests:    cfg.MaxConcurrentRequests,
@@ -175,7 +182,7 @@ func newQuerierWorkerWithProcessor(grpcCfg grpcclient.Config, cfg Config, log lo
 		managers:                 map[string]*processorManager{},
 		instances:                map[string]servicediscovery.Instance{},
 		processor:                processor,
-		invalidClusterValidation: middleware.NewRequestInvalidClusterVerficationLabelsTotalCounter(reg, "cortex_worker_client"),
+		invalidClusterValidation: util.NewRequestInvalidClusterVerficationLabelsTotalCounter(reg, workerClient, util.GRPCProtocol),
 	}
 
 	// There's no service discovery in some tests.
