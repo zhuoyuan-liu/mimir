@@ -97,7 +97,7 @@ func InitFrontend(
 		}
 
 		fr, err := v2.NewFrontend(cfg.FrontendV2, v2Limits, log, reg, codec, checkCluster)
-		return transport.AdaptGrpcRoundTripperToHTTPRoundTripper(fr, checkCluster, serverMetrics), nil, fr, err
+		return transport.AdaptGrpcRoundTripperToHTTPRoundTripper(fr, checkCluster, serverMetrics, log), nil, fr, err
 
 	default:
 		// No scheduler = use original frontend.
@@ -105,6 +105,6 @@ func InitFrontend(
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		return transport.AdaptGrpcRoundTripperToHTTPRoundTripper(fr, checkCluster, serverMetrics), fr, nil, nil
+		return transport.AdaptGrpcRoundTripperToHTTPRoundTripper(fr, checkCluster, serverMetrics, log), fr, nil, nil
 	}
 }
