@@ -65,7 +65,7 @@ func (a *grpcRoundTripperAdapter) RoundTrip(r *http.Request) (*http.Response, er
 		var ok bool
 		resp, ok = httpgrpc.HTTPResponseFromError(err)
 		level.Warn(a.logger).Log("msg", "grpcRoundTripperAdapter has failed while trying to call RoundTripGRPC()", "httpgrpc error", ok, "err", err)
-		a.invalidClusters.WithLabelValues(r.URL.Path, a.cluster, clusterutil.FailureServer)
+		a.invalidClusters.WithLabelValues(r.URL.Path, a.cluster, clusterutil.FailureServer).Inc()
 		if !ok {
 			return nil, err
 		}
